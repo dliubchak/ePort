@@ -11,12 +11,15 @@ export interface ClaudeCredentials {
 }
 
 export interface ClaudeAiOauth {
+  [key: string]: unknown;
   accessToken: string;
   refreshToken: string;
   expiresAt: number;
+  scopes?: string[];
 }
 
 export interface ClaudeAuthFile {
+  [key: string]: unknown;
   claudeAiOauth: ClaudeAiOauth;
   last_refresh?: string;
 }

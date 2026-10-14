@@ -22,7 +22,9 @@ export function parseClaudeAuthFile(raw: unknown): ClaudeAuthFile | null {
     typeof tokenData.expiresAt === "number" ? tokenData.expiresAt : 0;
 
   return {
+    ...data,
     claudeAiOauth: {
+      ...tokenData,
       accessToken,
       refreshToken,
       expiresAt,
@@ -44,7 +46,10 @@ export function readClaudeAuthFile(path: string): ClaudeAuthFile | null {
 
 export function writeClaudeAuthFile(path: string, auth: ClaudeAuthFile): void {
   mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, `${JSON.stringify(auth, null, 2)}\n`, "utf8");
+  writeFileSync(path, `${JSON.stringify(auth, null, 2)}\n`, {
+    encoding: "utf8",
+    mode: 0o600,
+  });
 }
 
 export function claudeExpiresAtMs(auth: ClaudeAuthFile): number {
@@ -101,16 +106,26 @@ export function tokenResponseToClaudeAuthFile(data: {
   access_token: string;
   refresh_token?: string;
   expires_in?: number;
-}): ClaudeAuthFile {
+  scope?: string;
+  refresh_token_expires_in?: number;
+}, previous?: ClaudeAuthFile): ClaudeAuthFile {
   const expiresAt =
     typeof data.expires_in === "number"
       ? Date.now() + data.expires_in * 1000
       : 0;
   return {
+    ...previous,
     claudeAiOauth: {
+      ...previous?.claudeAiOauth,
       accessToken: data.access_token,
-      refreshToken: data.refresh_token ?? "",
+      refreshToken: data.refresh_token ?? previous?.claudeAiOauth.refreshToken ?? "",
       expiresAt,
+      ...(typeof data.scope === "string"
+        ? { scopes: data.scope.split(/\s+/).filter(Boolean) }
+        : {}),
+      ...(typeof data.refresh_token_expires_in === "number"
+        ? { refreshTokenExpiresAt: Date.now() + data.refresh_token_expires_in * 1000 }
+        : {}),
     },
     last_refresh: new Date().toISOString(),
   };
