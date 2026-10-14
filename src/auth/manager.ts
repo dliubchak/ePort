@@ -601,6 +601,7 @@ export class AuthManager {
     return {
       ...fallback,
       claudeAiOauth: {
+        ...fallback.claudeAiOauth,
         accessToken: this.cachedClaude.accessToken,
         refreshToken: this.cachedClaude.refreshToken,
         expiresAt: this.cachedClaude.expiresAt,
@@ -778,7 +779,7 @@ export class AuthManager {
       refreshToken,
       this.claudeOauthDeps.fetchFn,
     );
-    const merged = tokenResponseToClaudeAuthFile(tokens);
+    const merged = tokenResponseToClaudeAuthFile(tokens, resolved.auth);
 
     writeClaudeAuthFile(resolved.path, merged);
     this.cachedClaude = credentialsFromClaudeAuthFile(
